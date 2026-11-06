@@ -1,0 +1,176 @@
+================================================================================
+  FRAPS – STOR FÖRKLARING
+  Vad det är och hur man kan bygga ett liknande program själv
+================================================================================
+
+1. VAD ÄR FRAPS?
+----------------
+
+Fraps (namnet kommer från "Frames per second") är ett klassiskt Windows-program 
+för skärminspelning, screenshots och benchmarking, särskilt populärt bland 
+PC-spelare på 2000-talet och tidigt 2010-tal.
+
+Utvecklare: Beepa Pty Ltd (australiensiskt företag)
+Första version: 1999
+Sista version: 3.5.99 (släppt 26 februari 2013)
+Status 2026: Discontinued / övergiven. Ingen uppdatering på över 13 år.
+             Trademarket gick ut 2017.
+
+Vad Fraps gjorde:
+• Visade en realtids-FPS-räknare (den klassiska gula siffran) i spel.
+• Benchmarking – loggade min/max/avg FPS och frame times.
+• Skärminspelning av DirectX- och OpenGL-spel (inte vanliga skrivbordet 
+  på samma sätt som moderna program).
+• Screenshots (BMP, JPG, PNG, TGA).
+• Loop recording (buffrade de senaste X sekunderna så man kunde spara 
+  "det som just hände").
+
+Begränsningar (särskilt i gratisversionen):
+- Videoinspelning begränsad till 30 sekunder + watermark.
+- Sparade alltid i AVI (ofta lossless eller lätt komprimerad) → enorma filstorlekar.
+- Ingen bra stöd för nyare API:er.
+
+Varför det dog ut:
+- Fraps stödde aldrig DirectX 12 eller Vulkan ordentligt.
+- Windows 10/11 och moderna GPU:er gjorde den gamla "hook"-tekniken problematisk.
+- Microsoft byggde in Game Bar / Xbox Game Bar med inbyggd inspelning.
+- OBS Studio, ShadowPlay (NVIDIA), ReLive (AMD), Bandicam, CapCut m.fl. 
+  blev mycket bättre alternativ.
+
+
+2. HUR FRAPS TEKNISKT FUNGERADE (HISTORISKT)
+--------------------------------------------
+
+Fraps använde en teknik som kallas API-hooking / interception:
+
+1. Den injicerade sig i spelets process.
+2. Den hookade viktiga DirectX/OpenGL-funktioner (t.ex. Present / SwapBuffers).
+3. När spelet skulle visa en ny frame kopierade Fraps bilden från back-buffern 
+   (snabbare än front-buffern).
+4. Bilden skrevs till en AVI-fil i realtid (ofta med en egen eller lossless codec).
+5. Samtidigt räknades FPS och visades som overlay.
+
+Detta gav mycket låg overhead jämfört med att fånga hela skrivbordet, 
+men det var känsligt för drivrutiner och API-versioner.
+
+
+3. HUR MAN BYGGER ETT MODERNT FRAPS-LIKNANDE PROGRAM IDAG
+---------------------------------------------------------
+
+Idag bygger man INTE på samma sätt som Fraps gjorde 2013. 
+Här är den moderna, rekommenderade vägen:
+
+A. Skärmfångst (Screen Capture)
+-------------------------------
+Windows (bästa alternativen):
+• Desktop Duplication API (DXGI) – officiell Microsoft-API sedan Windows 8.
+  Mycket effektiv, GPU-accelererad, fungerar med de flesta spel och skrivbord.
+• Windows.Graphics.Capture (nyare, mer modern).
+• För rena spel: NVIDIA Capture API / AMD AMF / Intel Quick Sync (om man vill 
+  ha hårdvaruacceleration).
+
+macOS:
+• ScreenCaptureKit (modern, effektiv).
+
+Linux:
+• PipeWire + X11/Wayland capture, eller ffmpeg med x11grab/kmsgrab.
+
+B. Ljudinspelning
+-----------------
+• WASAPI (Windows) – loopback för systemljud + mikrofon.
+• Core Audio (macOS)
+• PulseAudio / PipeWire (Linux)
+
+C. Kodning (Encoding)
+---------------------
+• FFmpeg (libx264, libx265, NVENC, AMF, QuickSync) – absolut standard.
+• Skriv till MP4/MKV med H.264/H.265 eller AV1 för rimliga filstorlekar.
+• Alternativt: egen realtidscodec eller lossless (HUFFYUV, Lagarith, FFV1) 
+  om man vill ha maximal kvalitet.
+
+D. Arkitektur för bra prestanda
+-------------------------------
+Modern rekommenderad design (inspirerad av OBS, Cap, PyShine m.fl.):
+
+1. Separata trådar:
+   - Capture-tråd (hämtar frames från GPU)
+   - Encoding-tråd (kodar video)
+   - Audio-tråd
+   - Writer-tråd (skriver till disk)
+
+2. Undvik Python GIL i capture-pathen om du använder Python 
+   (många använder C++/Rust core + tunn GUI).
+
+3. Använd zero-copy där det går (dela GPU-texturer istället för att 
+   kopiera till CPU).
+
+4. Buffer management – ringbuffer för frames så man inte droppar frames 
+   vid tillfälliga spike:ar.
+
+E. Extra funktioner som Fraps hade (och moderna program har)
+------------------------------------------------------------
+• FPS-overlay (rita text med DirectWrite / FreeType / ImGui)
+• Hotkeys (globala, t.ex. F9 för start/stop)
+• Loop recording / Instant Replay (spara de senaste 30–300 sekunderna)
+• Benchmark-loggning (CSV med frame times)
+• Multi-monitor support
+• Cursor capture (valfritt)
+• Mikrofon + systemljud med sync
+
+F. Bra open source-projekt att studera
+--------------------------------------
+• OBS Studio (absolut bästa referensen – öppen källkod, extremt välskriven)
+• Cap (modern, open source screen recorder)
+• SimpleScreenRecorder (Linux)
+• ShareX (Windows, mer för screenshots + enkel video)
+• FFmpeg själv (för encoding-delen)
+
+
+4. PRAKTISK STARTGUIDE FÖR ATT BYGGA ETT EGET
+---------------------------------------------
+
+Steg-för-steg för en minimal fungerande version:
+
+1. Välj språk:
+   - C++ / Rust → bäst prestanda
+   - C# + .NET → relativt enkelt på Windows
+   - Python + C++ extension → snabb prototyp
+
+2. Fånga skärmen med Desktop Duplication API (Windows-exempel finns 
+   massor av på GitHub och Microsofts dokumentation).
+
+3. Skicka frames till FFmpeg (via libavcodec eller process-pipe) och 
+   koda till H.264.
+
+4. Lägg till WASAPI för ljud.
+
+5. Bygg en enkel GUI (Qt, ImGui, eller webbaserad med Tauri/Electron).
+
+6. Lägg till hotkeys och FPS-counter.
+
+När det fungerar kan du lägga till:
+- Instant Replay (cirkulär buffer)
+- GPU-encoding (NVENC)
+- Multi-track ljud
+- Region capture
+- Webcam overlay
+
+
+5. SAMMANFATTNING
+-----------------
+Fraps var en legend under DirectX 9/10/11-eran tack vare sin låga overhead 
+och enkla FPS-räknare. Idag är tekniken föråldrad, men idén lever vidare i 
+OBS Studio, NVIDIA ShadowPlay, Xbox Game Bar och en mängd andra program.
+
+Att bygga ett modernt "Fraps" är betydligt enklare än att bygga en DaVinci 
+Resolve-klon. Med Desktop Duplication API + FFmpeg + en bra trådhantering 
+kan en skicklig utvecklare få en fungerande version på några veckor till 
+några månader.
+
+Börja med att läsa Microsofts dokumentation för DXGI Desktop Duplication 
+och titta på OBS Studios källkod – det är den bästa lärorika källan som finns.
+
+
+================================================================================
+Slut på dokumentet – Fraps
+================================================================================

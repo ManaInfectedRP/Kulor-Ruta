@@ -1,0 +1,181 @@
+================================================================================
+  DAVINCI RESOLVE – STOR FÖRKLARING
+  Vad det är och hur man skulle kunna bygga något liknande
+================================================================================
+
+1. VAD ÄR DAVINCI RESOLVE?
+--------------------------
+
+DaVinci Resolve är ett professionellt, allsidigt program för videoredigering, 
+färgkorrigering (color grading), visuella effekter (VFX), motion graphics och 
+ljudpostproduktion. Det utvecklas av det australiensiska företaget Blackmagic Design.
+
+Historik i korthet:
+- Ursprungligen skapat av det amerikanska företaget da Vinci Systems runt 2004 
+  som ett rent färgkorrigeringsverktyg för Hollywood-film.
+- Blackmagic Design köpte da Vinci Systems 2009 och har sedan dess byggt ut 
+  programmet till en komplett postproduktions-suite.
+- Idag (2026) finns version 21.x. Det finns både en gratisversion och en betald 
+  version kallad DaVinci Resolve Studio (engångsköp, ca 300 USD).
+
+Programmet är uppbyggt kring olika "pages" (sidor/arbetsytor):
+
+• Media          – Importera och organisera material
+• Cut            – Snabbklippning (bra för sociala medier och nyheter)
+• Edit           – Fullständig tidslinjeredigering (traditionell NLE)
+• Fusion         – Nodbaserad compositing, VFX och motion graphics
+• Color          – Världsklass färgkorrigering och grading (programmets starkaste del)
+• Fairlight      – Professionell ljudredigering och mixning
+• Deliver        – Exportera/rendera färdig video
+• Photo (nyare)  – Redigering och grading av stillbilder
+
+Varför är det så populärt?
+- Gratisversionen är extremt kraftfull (ca 95 % av Studio-funktionerna).
+- Används i Hollywood på stora filmer (t.ex. Avatar, Star Wars, Avengers m.fl.).
+- Extremt hög bildkvalitet (32-bit float, YRGB color science, bred färgskala).
+- Stödjer macOS, Windows, Linux och iPadOS.
+- Kraftfull AI (DaVinci Neural Engine) för t.ex. Magic Mask, Voice Isolation, 
+  Super Scale, automatisk bildstabilisering m.m.
+- Bra hårdvaruintegration med Blackmagics paneler, kameror och capture-kort.
+
+
+2. TEKNISK ÖVERSIKT – HUR FUNGERAR DET INTERNT?
+-----------------------------------------------
+
+Ett program som DaVinci Resolve är extremt komplext. Några av de viktigaste 
+tekniska delarna:
+
+A. Mediahantering & Codec-stöd
+   - Måste kunna läsa och skriva hundratals codecs och containers (ProRes, DNxHR, 
+     H.264/H.265, RAW från Blackmagic, RED, ARRI, Sony m.fl.).
+   - Proxy-workflow (lättviktsfiler för redigering, originalfiler vid export).
+   - Cache-system för realtidsprestanda.
+
+B. Tidslinje & Redigeringsmotor
+   - Multi-track tidslinje med oändliga lager.
+   - Real-time preview (måste rendera effekter, transitions, färg och ljud live).
+   - Keyframing, speed ramping, compositing-läge m.m.
+
+C. Färgmotor (Color Science)
+   - Nodbaserad grading (inte lagerbaserad som i många andra program).
+   - Primary & Secondary correction, curves, qualifiers, power windows, tracking.
+   - HDR-stöd, ACES, Rec.709, Rec.2020, wide gamut.
+   - 32-bit float precision för att undvika banding och kvalitetsförlust.
+
+D. VFX / Fusion
+   - Nodbaserad compositing (liknande Nuke/After Effects men mer "procedural").
+   - 3D-space, particle systems, tracking, keying, warp m.m.
+
+E. Ljud (Fairlight)
+   - Multi-channel mixing, EQ, dynamics, reverb, automation.
+   - ADR, Foley, dialog-redigering.
+
+F. GPU-acceleration & Prestanda
+   - Tung användning av CUDA, OpenCL, Metal och DirectX.
+   - Parallel processing på flera GPU:er (i Studio-versionen).
+   - Neural Engine för AI-funktioner.
+
+G. Samarbete
+   - Blackmagic Cloud för multi-user collaboration i realtid.
+   - Projektbibliotek, bin-struktur, metadata.
+
+
+3. HUR KAN MAN BYGGA NÅGOT LIKNANDE SJÄLV?
+------------------------------------------
+
+Att bygga en fullständig DaVinci Resolve-klon är ett multiårigt, multi-miljonprojekt 
+för ett stort team. Men man kan bygga en "liknande" (mycket enklare) videoredigerare 
+steg för steg. Här är en realistisk väg:
+
+STEG 1: Välj teknikstack
+------------------------
+Rekommenderad modern stack för en desktop-app:
+
+• Språk:          C++ (prestanda) + Python för scripting, eller Rust + TypeScript
+• UI-ramverk:     Qt 6 / QML   eller   Electron/Tauri + webbteknik
+• Videomotor:     FFmpeg (avkodning/kodning) + MLT Framework eller libopenshot
+• GPU:            OpenGL / Vulkan / Metal / DirectX + CUDA/OpenCL för acceleration
+• Färg:           OpenColorIO (OCIO) för professionell color management
+• Ljud:           PortAudio / JACK / WASAPI + egen mixer eller Fairlight-liknande
+• AI:             ONNX Runtime eller TensorRT för neurala nätverk
+
+Populära open source-projekt att studera/lära från:
+- OpenShot (Python + libopenshot + FFmpeg)
+- Shotcut / Kdenlive (MLT Framework)
+- Olive Video Editor
+- Natron (nodbaserad compositing, open source)
+- Blender (VSE + Compositor)
+
+STEG 2: Bygg grundläggande funktionalitet i ordning
+---------------------------------------------------
+1. Media-importerare
+   - Använd FFmpeg för att läsa filer, extrahera metadata, generera thumbnails 
+     och audio waveforms.
+
+2. Enkel tidslinje
+   - Drag-and-drop clips, klippa (cut), flytta, trimma, split.
+   - Multi-track stöd (video + audio).
+
+3. Real-time preview
+   - Rendera aktuell frame till skärmen med OpenGL/Vulkan.
+   - Börja med software-rendering, lägg till GPU senare.
+
+4. Grundläggande effekter & transitions
+   - Fade, dissolve, crop, scale, position, opacity.
+   - Keyframing.
+
+5. Enkel färgkorrigering
+   - Lift/Gamma/Gain eller RGB-curves.
+   - Senare: nodbaserat system.
+
+6. Export
+   - FFmpeg för att rendera ut H.264/H.265/ProRes m.m.
+
+7. Avancerade delar (mycket svårare)
+   - Nodbaserad compositing (Fusion-liknande)
+   - Professionell color science (32-bit float, wide gamut)
+   - AI-funktioner (masking, upscaling, noise reduction)
+   - Multi-user collaboration
+   - Hårdvarustöd (capture-kort, control panels)
+
+STEG 3: Prestanda & arkitektur
+------------------------------
+- Separera UI-tråd från renderings-/avkodningstrådar.
+- Använd proxy-filer för tunga 4K/8K-material.
+- Cachea intermediate-resultat.
+- Stöd både CPU- och GPU-decoding/encoding.
+- Hantera minne extremt noggrant (video äter RAM och VRAM).
+
+STEG 4: Realistiska förväntningar
+---------------------------------
+- En ensam utvecklare kan på 1–3 år bygga en användbar enkel redigerare 
+  (tänk Shotcut/OpenShot-nivå).
+- Att nå DaVinci Resolves nivå på färg, stabilitet, codec-stöd och AI kräver 
+  ett team på tiotals till hundratals ingenjörer och många år.
+- Börja litet: fokusera på en bra tidslinje + FFmpeg + enkel färg. 
+  Bygg sedan ut.
+
+Tips för att komma igång praktiskt:
+1. Lär dig FFmpeg grundligt (kommandorad + libav*).
+2. Bygg en minimal player som kan spela video med OpenGL.
+3. Lägg till en tidslinje ovanpå.
+4. Studera källkoden till OpenShot, Shotcut och MLT.
+5. Använd Qt Creator eller Visual Studio + CMake.
+
+
+4. SAMMANFATTNING
+-----------------
+DaVinci Resolve är idag det närmaste man kommer en "komplett Hollywood-postproduktionsstudio 
+i ett enda program". Det är gratis i sin basversion och extremt kapabelt.
+
+Att bygga något liknande är möjligt i teorin, men i praktiken är det ett enormt 
+ingenjörsprojekt. Börja med open source-bibliotek (FFmpeg, MLT, Qt, OpenColorIO) 
+och bygg steg för steg. Många moderna open source-redigerare (OpenShot, Shotcut, 
+Kdenlive, Olive) är utmärkta startpunkter och lärorika kodbaser.
+
+Lycka till om du bestämmer dig för att bygga något eget!
+
+
+================================================================================
+Slut på dokumentet – DaVinci Resolve
+================================================================================
